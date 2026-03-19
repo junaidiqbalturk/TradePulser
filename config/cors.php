@@ -15,13 +15,13 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'register-company'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => ['https://trade-pulser.vercel.app', 'http://localhost:3000'],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => ['#^https://trade-pulser.*\.vercel\.app$#'],
 
     'allowed_headers' => ['*'],
 
