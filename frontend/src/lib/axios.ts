@@ -7,7 +7,7 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     },
-    withCredentials: false,
+    withCredentials: true,
 });
 
 // Request interceptor to attach token
@@ -28,8 +28,9 @@ api.interceptors.response.use(
         if (!error.response) {
             // Network error (server is down or connection refused)
             if (typeof window !== 'undefined') {
-                toast.error("Network Error: Backend server is unreachable. Please ensure Laravel is running.", {
-                    duration: 5000,
+                const url = error.config?.baseURL + (error.config?.url || '');
+                toast.error(`Network Error: Backend unreachable at ${url}. Check Vercel Env Vars.`, {
+                    duration: 7000,
                     id: "network-error"
                 });
             }
