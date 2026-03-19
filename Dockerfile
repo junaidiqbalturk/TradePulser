@@ -45,5 +45,8 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
 # Expose port 80
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Make deployment script executable
+RUN chmod +x /var/www/html/deploy.sh
+
+# Start using the deployment script
+CMD ["/var/www/html/deploy.sh"]
