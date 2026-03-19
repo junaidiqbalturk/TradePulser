@@ -68,13 +68,22 @@ class AuthController extends Controller
             // 2. Find Admin Role
             $adminRole = Role::where('name', 'Admin')->first();
 
+            if (!$adminRole) {
+                // If role is missing (seeder didn't run), create it or fail
+                $adminRole = Role::create([
+                    'name' => 'Admin',
+                    'description' => 'Full system access'
+                ]);
+            }
+
             // 3. Create First User (Admin)
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'company_id' => $company->id,
-                'role_id' => $adminRole ? $adminRole->id : null,
+                'role_id' => $adminRole->id,
+                'has_completed_onboarding' => 0,
             ]);
 
             // 4. Seed Demo Data

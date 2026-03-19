@@ -15,12 +15,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Default admin user
-        User::firstOrCreate(
-            ['email' => 'admin@tradepulser.com'],
-            ['name' => 'Admin User', 'password' => \Illuminate\Support\Facades\Hash::make('password')]
-        );
-
         $this->call([
             RolesAndPermissionsSeeder::class,
             ChartOfAccountsSeeder::class,

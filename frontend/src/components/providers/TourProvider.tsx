@@ -68,7 +68,7 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }, 2000);
             return () => clearTimeout(timer);
         }
-    }, [user?.has_completed_onboarding]);
+    }, [user?.id, user?.has_completed_onboarding]);
 
     // Update target position when step changes
     useEffect(() => {

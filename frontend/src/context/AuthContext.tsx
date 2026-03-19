@@ -75,7 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setToken(newToken);
         setUser(userData);
-        router.push('/');
+        // Small delay to let providers react to state change before navigation
+        setTimeout(() => {
+            router.push('/');
+        }, 100);
     };
 
     const logout = async () => {
