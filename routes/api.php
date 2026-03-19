@@ -41,6 +41,25 @@ use App\Http\Controllers\AnalyticsController;
 Route::post('/login', [AuthController::class , 'login']);
 Route::post('/register-company', [AuthController::class, 'registerCompany']);
 
+// Temporary cleanup route for Modulytica - Delete after use
+Route::get('/cleanup-modulytica', function (Request $request) {
+    if ($request->query('secret') !== 'pulsar_cleanup_2026') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    $email = 'junaidiqbal@modulytica.com';
+    $companyName = 'Modulytica';
+
+    DB::transaction(function () use ($email, $companyName) {
+        // Delete users with this email
+        \App\Models\User::where('email', $email)->delete();
+        // Delete company by name
+        \App\Models\Company::where('company_name', $companyName)->delete();
+    });
+
+    return response()->json(['message' => 'Modulytica data cleaned up successfully']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user()->load(['role.permissions', 'company']);
