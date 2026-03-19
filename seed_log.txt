@@ -1,0 +1,29 @@
+
+   INFO  Seeding database.  
+
+  Database\Seeders\ChartOfAccountsSeeder ......................... RUNNING  
+  Database\Seeders\ChartOfAccountsSeeder ...................... 20 ms DONE  
+
+  Database\Seeders\DummyDataSeeder ............................... RUNNING  
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[01000]: Warning: 1265 Data truncated for column 'status' at row 1 (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: tradeflow, SQL: insert into `vouchers` (`voucher_number`, `client_id`, `type`, `date`, `amount`, `base_amount`, `exchange_rate`, `currency`, `payment_method`, `status`, `created_at`, `updated_at`) values (RV-9A9H-BUIJ, 37, receipt, 2024-01-02, 14498, 14498, 1, PKR, bank, posted, 2024-01-02 00:00:00, 2024-01-02 00:00:00))
+
+  at vendor\laravel\framework\src\Illuminate\Database\Connection.php:838
+    834Γûò             $exceptionType = $this->isUniqueConstraintError($e)
+    835Γûò                 ? UniqueConstraintViolationException::class
+    836Γûò                 : QueryException::class;
+    837Γûò 
+  Γ₧£ 838Γûò             throw new $exceptionType(
+    839Γûò                 $this->getNameWithReadWriteType(),
+    840Γûò                 $query,
+    841Γûò                 $this->prepareBindings($bindings),
+    842Γûò                 $e,
+
+  1   vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php:53
+      PDOException::("SQLSTATE[01000]: Warning: 1265 Data truncated for column 'status' at row 1")
+
+  2   vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php:53
+      PDOStatement::execute()
+
