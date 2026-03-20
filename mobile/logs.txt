@@ -1,0 +1,145 @@
+Launching lib\main.dart on 2201116TG in debug mode...
+Running Gradle task 'assembleDebug'...                             11.1s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+I/flutter ( 4422): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(60)] Using the Impeller rendering backend (Vulkan).
+Syncing files to device 2201116TG...                            
+W/libc    ( 4422): Access denied finding property "persist.vendor.debug.gpud.enable"
+E/lser.mobile_app( 4422): FI open fail: No such file or directory
+W/libc    ( 4422): Access denied finding property "ro.vendor.display.iris_x7.support"
+I/gralloc4( 4422): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+W/libc    ( 4422): Access denied finding property "ro.vendor.display.iris_x7.support"
+D/BLASTBufferQueue( 4422): [SurfaceView[com.tradepulser.mobile_app/com.tradepulser.mobile_app.MainActivity]#1](f:0,a:1) acquireNextBufferLocked size=1080x2356 mFrameNumber=1 applyTransaction=true mTimestamp=618479288271633(auto) mPendingTransactions.size=0 graphicBufferId=18992345382922 transform=0
+D/VRI[MainActivity]( 4422): vri.Setup new sync id=0 syncSeqId=0
+D/lser.mobile_app( 4422): MiuiProcessManagerServiceStub setSchedFifo
+I/MiuiProcessManagerImpl( 4422): setSchedFifo pid:4422, mode:3
+W/libc    ( 4422): Access denied finding property "ro.vendor.display.iris_x7.support"
+D/BLASTBufferQueue( 4422): [VRI[MainActivity]#0](f:0,a:1) acquireNextBufferLocked size=1080x2400 mFrameNumber=1 applyTransaction=true mTimestamp=618479313194018(auto) mPendingTransactions.size=0 graphicBufferId=18992345382930 transform=0
+W/Parcel  ( 4422): Expecting binder but got null!
+D/VRI[MainActivity]( 4422): vri.reportDrawFinished syncSeqId=0 android.view.ViewRootImpl.lambda$createSyncIfNeeded$4$android-view-ViewRootImpl:4021 android.view.ViewRootImpl$$ExternalSyntheticLambda1.run:6 android.os.Handler.handleCallback:942 android.os.Handler.dispatchMessage:99 android.os.Looper.loopOnce:211 
+D/DecorView[]( 4422): onWindowFocusChanged hasWindowFocus true
+I/HandWritingStubImpl( 4422): refreshLastKeyboardType: 1
+I/HandWritingStubImpl( 4422): getCurrentKeyboardType: 1
+I/HandWritingStubImpl( 4422): getCurrentKeyboardType: 1
+Syncing files to device 2201116TG...                               278ms
+I/gralloc4( 4422): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+
+Flutter run key commands.
+r Hot reload. 
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+A Dart VM Service on 2201116TG is available at: http://127.0.0.1:52386/noqb3cMf2aQ=/
+I/flutter ( 4422): animate: true
+I/gralloc4( 4422): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+W/libc    ( 4422): Access denied finding property "ro.vendor.display.iris_x7.support"
+The Flutter DevTools debugger and profiler on 2201116TG is available at: http://127.0.0.1:9100?uri=http://127.0.0.1:52386/noqb3cMf2aQ=/
+I/flutter ( 4422): API_LOG: *** Request ***
+I/flutter ( 4422): API_LOG: uri: https://tradepulser-api.onrender.com/api/dashboard
+I/flutter ( 4422): API_LOG: method: GET
+I/flutter ( 4422): API_LOG: responseType: ResponseType.json
+I/flutter ( 4422): API_LOG: followRedirects: true
+I/flutter ( 4422): API_LOG: persistentConnection: true
+I/flutter ( 4422): API_LOG: connectTimeout: 0:00:15.000000
+I/flutter ( 4422): API_LOG: sendTimeout: null
+I/flutter ( 4422): API_LOG: receiveTimeout: 0:00:15.000000
+I/flutter ( 4422): API_LOG: receiveDataWhenStatusError: true
+I/flutter ( 4422): API_LOG: extra: {}
+I/flutter ( 4422): API_LOG: headers:
+I/flutter ( 4422): API_LOG:  Accept: application/json
+I/flutter ( 4422): API_LOG:  Content-Type: application/json
+I/flutter ( 4422): API_LOG: data:
+I/flutter ( 4422): API_LOG: null
+I/flutter ( 4422): API_LOG: 
+I/flutter ( 4422): API_REQUEST: GET https://tradepulser-api.onrender.com/api/dashboard
+I/gralloc4( 4422): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+I/gralloc4( 4422): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+I/gralloc4( 4422): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+I/gralloc4( 4422): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+I/gralloc4( 4422): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+D/ProfileInstaller( 4422): Installing profile for com.tradepulser.mobile_app
+I/flutter ( 4422): API_LOG: *** Response ***
+I/flutter ( 4422): API_LOG: uri: https://tradepulser-api.onrender.com/api/dashboard
+I/flutter ( 4422): API_LOG: statusCode: 200
+I/flutter ( 4422): API_LOG: statusMessage: OK
+I/flutter ( 4422): API_LOG: headers:
+I/flutter ( 4422): API_LOG:  connection: keep-alive
+I/flutter ( 4422): API_LOG:  cache-control: no-cache, private
+I/flutter ( 4422): API_LOG:  x-render-origin-server: Apache/2.4.66 (Debian)
+I/flutter ( 4422): API_LOG:  transfer-encoding: chunked
+I/flutter ( 4422): API_LOG:  date: Fri, 20 Mar 2026 09:59:16 GMT
+I/flutter ( 4422): API_LOG:  content-encoding: gzip
+I/flutter ( 4422): API_LOG:  vary: Authorization,Origin
+I/flutter ( 4422): 	Accept-Encoding
+I/flutter ( 4422): API_LOG:  cf-cache-status: DYNAMIC
+I/flutter ( 4422): API_LOG:  content-type: application/json
+I/flutter ( 4422): API_LOG:  rndr-id: 209d37d1-81ec-48b3
+I/flutter ( 4422): API_LOG:  server: cloudflare
+I/flutter ( 4422): API_LOG:  x-powered-by: PHP/8.2.30
+I/flutter ( 4422): API_LOG:  alt-svc: h3=":443"; ma=86400
+I/flutter ( 4422): API_LOG:  cf-ray: 9df3dceccabc908f-KHI
+I/flutter ( 4422): API_LOG: Response Text:
+I/flutter ( 4422): API_LOG: {"total_clients":1,"total_receivable":0,"total_payments_received":0,"total_imports":0,"total_exports":0,"recent_transactions":[],"recent_documents":[],"recent_generated":[],"revenue_data":[{"name":"Oct","revenue":0},{"name":"Nov","revenue":0},{"name":"Dec","revenue":0},{"name":"Jan","revenue":0},{"name":"Feb","revenue":0},{"name":"Mar","revenue":0}],"activity_data":[{"name":"Mon","import":0,"export":0},{"name":"Tue","import":0,"export":0},{"name":"Wed","import":0,"export":0},{"name":"Thu","import":0,"export":0},{"name":"Fri","import":0,"export":0},{"name":"Sat","import":0,"export":0},{"name":"Sun","import":0,"export":0}],"open_pos":0,"pending_deliveries":0,"total_po_value":0}
+I/flutter ( 4422): API_LOG: 
+I/flutter ( 4422): API_RESPONSE: 200 https://tradepulser-api.onrender.com/api/dashboard
+I/flutter ( 4422): animate: true
+I/flutter ( 4422): animate: true
+W/MirrorManager( 4422): this model don't Support
+I/ScrollIdentify( 4422): on fling
+I/flutter ( 4422): API_LOG: *** Request ***
+I/flutter ( 4422): API_LOG: uri: https://tradepulser-api.onrender.com/api/logout
+I/flutter ( 4422): API_LOG: method: POST
+I/flutter ( 4422): API_LOG: responseType: ResponseType.json
+I/flutter ( 4422): API_LOG: followRedirects: true
+I/flutter ( 4422): API_LOG: persistentConnection: true
+I/flutter ( 4422): API_LOG: connectTimeout: 0:00:15.000000
+I/flutter ( 4422): API_LOG: sendTimeout: null
+I/flutter ( 4422): API_LOG: receiveTimeout: 0:00:15.000000
+I/flutter ( 4422): API_LOG: receiveDataWhenStatusError: true
+I/flutter ( 4422): API_LOG: extra: {}
+I/flutter ( 4422): API_LOG: headers:
+I/flutter ( 4422): API_LOG:  Accept: application/json
+I/flutter ( 4422): API_LOG:  Content-Type: application/json
+I/flutter ( 4422): API_LOG: data:
+I/flutter ( 4422): API_LOG: null
+I/flutter ( 4422): API_LOG: 
+I/flutter ( 4422): API_REQUEST: POST https://tradepulser-api.onrender.com/api/logout
+I/flutter ( 4422): API_LOG: *** Response ***
+I/flutter ( 4422): API_LOG: uri: https://tradepulser-api.onrender.com/api/logout
+I/flutter ( 4422): API_LOG: statusCode: 200
+I/flutter ( 4422): API_LOG: statusMessage: OK
+I/flutter ( 4422): API_LOG: headers:
+I/flutter ( 4422): API_LOG:  connection: keep-alive
+I/flutter ( 4422): API_LOG:  cache-control: no-cache, private
+I/flutter ( 4422): API_LOG:  x-render-origin-server: Apache/2.4.66 (Debian)
+I/flutter ( 4422): API_LOG:  transfer-encoding: chunked
+I/flutter ( 4422): API_LOG:  date: Fri, 20 Mar 2026 10:01:22 GMT
+I/flutter ( 4422): API_LOG:  content-encoding: gzip
+I/flutter ( 4422): API_LOG:  vary: Authorization,Origin
+I/flutter ( 4422): 	Accept-Encoding
+I/flutter ( 4422): API_LOG:  cf-cache-status: DYNAMIC
+I/flutter ( 4422): API_LOG:  content-type: application/json
+I/flutter ( 4422): API_LOG:  rndr-id: 527a218c-0224-4864
+I/flutter ( 4422): API_LOG:  server: cloudflare
+I/flutter ( 4422): API_LOG:  x-powered-by: PHP/8.2.30
+I/flutter ( 4422): API_LOG:  alt-svc: h3=":443"; ma=86400
+I/flutter ( 4422): API_LOG:  cf-ray: 9df3e00808999074-KHI
+I/flutter ( 4422): API_LOG: Response Text:
+I/flutter ( 4422): API_LOG: {"message":"Logged out successfully"}
+I/flutter ( 4422): API_LOG: 
+I/flutter ( 4422): API_RESPONSE: 200 https://tradepulser-api.onrender.com/api/logout
+I/flutter ( 4422): animate: true
+I/flutter ( 4422): animate: true
+I/flutter ( 4422): animate: true
+D/DecorView[]( 4422): onWindowFocusChanged hasWindowFocus false
+D/DecorView[]( 4422): onWindowFocusChanged hasWindowFocus true
+I/HandWritingStubImpl( 4422): refreshLastKeyboardType: 1
+I/HandWritingStubImpl( 4422): getCurrentKeyboardType: 1
+D/BLASTBufferQueue( 4422): [SurfaceView[com.tradepulser.mobile_app/com.tradepulser.mobile_app.MainActivity]#1](f:0,a:4) destructor()
+D/BufferQueueConsumer( 4422): [SurfaceView[com.tradepulser.mobile_app/com.tradepulser.mobile_app.MainActivity]#1(BLAST Consumer)1](id:114600000001,api:0,p:-1,c:4422) disconnect
+D/BLASTBufferQueue( 4422): [VRI[MainActivity]#0](f:0,a:2) destructor()
+D/BufferQueueConsumer( 4422): [VRI[MainActivity]#0(BLAST Consumer)0](id:114600000000,api:0,p:-1,c:4422) disconnect
+D/DecorView[]( 4422): onWindowFocusChanged hasWindowFocus false
+Lost connection to device.

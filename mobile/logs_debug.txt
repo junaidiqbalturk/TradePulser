@@ -1,0 +1,81 @@
+Launching lib\main.dart on 2201116TG in debug mode...
+Running Gradle task 'assembleDebug'...                          
+I/flutter ( 4422): API_LOG: *** Request ***
+I/flutter ( 4422): API_LOG: uri: https://tradepulser-api.onrender.com/api/logout
+I/flutter ( 4422): API_LOG: method: POST
+I/flutter ( 4422): API_LOG: responseType: ResponseType.json
+I/flutter ( 4422): API_LOG: followRedirects: true
+I/flutter ( 4422): API_LOG: persistentConnection: true
+I/flutter ( 4422): API_LOG: connectTimeout: 0:00:15.000000
+I/flutter ( 4422): API_LOG: sendTimeout: null
+I/flutter ( 4422): API_LOG: receiveTimeout: 0:00:15.000000
+I/flutter ( 4422): API_LOG: receiveDataWhenStatusError: true
+I/flutter ( 4422): API_LOG: extra: {}
+I/flutter ( 4422): API_LOG: headers:
+I/flutter ( 4422): API_LOG:  Accept: application/json
+I/flutter ( 4422): API_LOG:  Content-Type: application/json
+I/flutter ( 4422): API_LOG: data:
+I/flutter ( 4422): API_LOG: null
+I/flutter ( 4422): API_LOG: 
+I/flutter ( 4422): API_REQUEST: POST https://tradepulser-api.onrender.com/api/logout
+I/flutter ( 4422): API_LOG: *** Response ***
+I/flutter ( 4422): API_LOG: uri: https://tradepulser-api.onrender.com/api/logout
+I/flutter ( 4422): API_LOG: statusCode: 200
+I/flutter ( 4422): API_LOG: statusMessage: OK
+I/flutter ( 4422): API_LOG: headers:
+I/flutter ( 4422): API_LOG:  connection: keep-alive
+I/flutter ( 4422): API_LOG:  cache-control: no-cache, private
+I/flutter ( 4422): API_LOG:  x-render-origin-server: Apache/2.4.66 (Debian)
+I/flutter ( 4422): API_LOG:  transfer-encoding: chunked
+I/flutter ( 4422): API_LOG:  date: Fri, 20 Mar 2026 10:01:22 GMT
+I/flutter ( 4422): API_LOG:  content-encoding: gzip
+I/flutter ( 4422): API_LOG:  vary: Authorization,Origin
+I/flutter ( 4422): 	Accept-Encoding
+I/flutter ( 4422): API_LOG:  cf-cache-status: DYNAMIC
+I/flutter ( 4422): API_LOG:  content-type: application/json
+I/flutter ( 4422): API_LOG:  rndr-id: 527a218c-0224-4864
+I/flutter ( 4422): API_LOG:  server: cloudflare
+I/flutter ( 4422): API_LOG:  x-powered-by: PHP/8.2.30
+I/flutter ( 4422): API_LOG:  alt-svc: h3=":443"; ma=86400
+I/flutter ( 4422): API_LOG:  cf-ray: 9df3e00808999074-KHI
+I/flutter ( 4422): API_LOG: Response Text:
+I/flutter ( 4422): API_LOG: {"message":"Logged out successfully"}
+I/flutter ( 4422): API_LOG: 
+I/flutter ( 4422): API_RESPONSE: 200 https://tradepulser-api.onrender.com/api/logout
+I/flutter ( 4422): animate: true
+I/flutter ( 4422): animate: true
+I/flutter ( 4422): animate: true
+I/flutter ( 5856): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(60)] Using the Impeller rendering backend (Vulkan).
+I/flutter ( 5856): animate: true
+I/flutter ( 5856): animate: true
+I/flutter ( 5856): animate: true
+Running Gradle task 'assembleDebug'...                             26.6s
+ΓêÜ Built build\app\outputs\flutter-apk\app-debug.apk
+Installing build\app\outputs\flutter-apk\app-debug.apk...           5.2s
+I/flutter ( 6395): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(60)] Using the Impeller rendering backend (Vulkan).
+I/flutter ( 6395): animate: true
+Syncing files to device 2201116TG...                            
+I/flutter ( 6395): animate: true
+I/flutter ( 6395): animate: true
+I/gralloc4( 6395): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+I/gralloc4( 6395): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+Syncing files to device 2201116TG...                               215ms
+I/gralloc4( 6395): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+I/gralloc4( 6395): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+I/gralloc4( 6395): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+I/gralloc4( 6395): @set_metadata: update dataspace from GM (0x08010000 -> 0x00000000)
+
+Flutter run key commands.
+r Hot reload. 
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+A Dart VM Service on 2201116TG is available at: http://127.0.0.1:61260/EFtc-oqWktg=/
+The Flutter DevTools debugger and profiler on 2201116TG is available at: http://127.0.0.1:9100?uri=http://127.0.0.1:61260/EFtc-oqWktg=/
+D/ProfileInstaller( 6395): Installing profile for com.tradepulser.mobile_app
+W/MirrorManager( 6395): this model don't Support
+I/ScrollIdentify( 6395): on fling
+Lost connection to device.

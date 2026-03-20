@@ -9,14 +9,12 @@ trait Multitenant
 {
     public static function bootMultitenant()
     {
-        if (auth()->check()) {
-            static::creating(function (Model $model) {
-                if (!$model->company_id) {
-                    $model->company_id = auth()->user()->company_id;
-                }
-            });
+        static::creating(function (Model $model) {
+            if (auth()->check() && !$model->company_id) {
+                $model->company_id = auth()->user()->company_id;
+            }
+        });
 
-            static::addGlobalScope(new TenantScope);
-        }
+        static::addGlobalScope(new TenantScope);
     }
 }

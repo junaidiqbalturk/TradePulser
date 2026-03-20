@@ -54,6 +54,8 @@ export default function RolesPage() {
     const [roles, setRoles] = useState<Role[]>([]);
     const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingRole, setEditingRole] = useState<Role | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
 
