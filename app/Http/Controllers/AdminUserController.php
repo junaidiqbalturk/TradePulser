@@ -13,7 +13,7 @@ class AdminUserController extends Controller
 {
     public function index()
     {
-        return response()->json(User::with('role')->get());
+        return response()->json(User::where('company_id', auth()->user()->company_id)->with('role')->get());
     }
 
     public function store(Request $request)
@@ -30,6 +30,7 @@ class AdminUserController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role_id' => $validated['role_id'] ?? null,
+            'company_id' => auth()->user()->company_id,
         ]);
 
         return response()->json($user->load('role'), 201);
@@ -52,6 +53,7 @@ class AdminUserController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($password),
             'role_id' => $validated['role_id'],
+            'company_id' => auth()->user()->company_id,
         ]);
 
         // Send invitation email
@@ -72,13 +74,22 @@ class AdminUserController extends Controller
             'role_id' => 'nullable|exists:roles,id'
         ]);
 
+        // Ensure user belongs to the same company as the admin
+        if ($user->company_id !== auth()->user()->company_id) {
+            return response()->json(['message' => 'Unauthorized access to user of different company'], 403);
+        }
+
         $user->update($validated);
 
         return response()->json($user->load('role'));
     }
-
     public function destroy(User $user)
     {
+        // Ensure admin can only delete user in their own company
+        if ($user->company_id !== auth()->user()->company_id) {
+            return response()->json(['message' => 'Unauthorized access to user of different company'], 403);
+        }
+
         if ($user->email === 'admin@tradepulser.com') {
             return response()->json(['message' => 'Cannot delete primary admin user'], 422);
         }
