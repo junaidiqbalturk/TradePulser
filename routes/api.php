@@ -37,6 +37,7 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\GeneratedDocumentController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\NotificationController;
 
 Route::post('/login', [AuthController::class , 'login']);
 Route::post('/register-company', [AuthController::class, 'registerCompany']);
@@ -178,4 +179,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('inventory-insights', [AnalyticsController::class, 'getInventoryInsights']);
         Route::get('kpis', [AnalyticsController::class, 'getKpis']);
     });
+
+    // Notifications
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });

@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\DB;
 
 use App\Services\ExchangeRateService;
 use App\Services\AccountingService;
+use App\Models\User;
+use App\Notifications\AccountActivityNotification;
+use Illuminate\Support\Facades\Notification;
 
 class VoucherController extends Controller
 {
@@ -74,6 +77,16 @@ class VoucherController extends Controller
             }
 
             DB::commit();
+
+            // Phase 1: Notify Admins of the company
+            $admins = User::where('company_id', $voucher->company_id)
+                ->whereHas('role', function ($query) {
+                    $query->whereIn('name', ['Admin', 'Manager']); // Assuming Admins/Managers approve
+                })->get();
+
+            if ($admins->count() > 0) {
+                Notification::send($admins, new AccountActivityNotification($voucher, 'created', auth()->user()->name));
+            }
 
             return response()->json($voucher->load(['client', 'clientBank', 'vendor', 'vendorBank']), 201);
         } catch (\Exception $e) {

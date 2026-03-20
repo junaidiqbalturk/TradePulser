@@ -30,6 +30,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usePathname } from "next/navigation";
+import { NotificationBell } from "./NotificationBell";
 
 export function Navigation() {
     const { user, logout } = useAuth();
@@ -69,16 +70,13 @@ export function Navigation() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <button className="relative flex h-8 w-8 items-center justify-center rounded-full border border-border bg-muted/50 hover:bg-muted text-muted-foreground transition-colors focus:outline-none">
-                        <Bell className="h-4 w-4" />
-                        <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 rounded-full bg-destructive border-[1.5px] border-card"></span>
-                    </button>
+                    <NotificationBell />
 
                     <DropdownMenu>
                         <DropdownMenuTrigger className="flex items-center gap-4 focus:outline-none ml-2">
                             <span className="hidden text-right lg:block">
                                 <span className="block text-sm font-medium text-foreground">{user.name}</span>
-                                <span className="block text-xs font-medium text-muted-foreground">Administrator</span>
+                                <span className="block text-xs font-medium text-muted-foreground">{user.role?.name || 'User'}</span>
                             </span>
                             <span className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10 text-primary font-bold">
                                 <UserIcon className="h-5 w-5" />

@@ -7,6 +7,7 @@ use App\Models\Voucher;
 use App\Models\Ledger;
 use App\Services\AccountingService;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\AccountActivityNotification;
 
 class VoucherApprovalController extends Controller
 {
@@ -46,6 +47,12 @@ class VoucherApprovalController extends Controller
             $this->accountingService->postVoucher($voucher);
 
             DB::commit();
+
+            // Phase 2: Notify the creator
+            if ($voucher->creator) {
+                $voucher->creator->notify(new AccountActivityNotification($voucher, 'approved', auth()->user()->name));
+            }
+
             return response()->json(['message' => 'Voucher approved and posted.']);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -62,6 +69,11 @@ class VoucherApprovalController extends Controller
         $voucher->status = 'rejected';
         $voucher->notes .= "\nRejection Reason: " . ($request->reason ?? 'No reason provided');
         $voucher->save();
+
+        // Phase 2: Notify the creator
+        if ($voucher->creator) {
+            $voucher->creator->notify(new AccountActivityNotification($voucher, 'rejected', auth()->user()->name));
+        }
 
         return response()->json(['message' => 'Voucher rejected.']);
     }

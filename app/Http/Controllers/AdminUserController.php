@@ -8,6 +8,7 @@ use App\Mail\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 
 class AdminUserController extends Controller
 {
@@ -25,15 +26,20 @@ class AdminUserController extends Controller
             'role_id' => 'nullable|exists:roles,id'
         ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role_id' => $validated['role_id'] ?? null,
-            'company_id' => auth()->user()->company_id,
-        ]);
+        return DB::transaction(function () use ($validated) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role_id' => $validated['role_id'] ?? null,
+                'company_id' => auth()->user()->company_id,
+            ]);
 
-        return response()->json($user->load('role'), 201);
+            // Send invitation email
+            Mail::to($user->email)->send(new \App\Mail\UserInvitation($user, $validated['password']));
+
+            return response()->json($user->load('role.permissions'), 201);
+        });
     }
 
     public function invite(Request $request)

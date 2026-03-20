@@ -128,13 +128,21 @@ export default function UsersManagementPage() {
                 await api.put(`/admin/users/${editingUser.id}`, updateData);
                 toast.success("User updated successfully");
             } else {
-                await api.post("/admin/users", userForm);
+                const submitData = {
+                    ...userForm,
+                    role_id: userForm.role_id === "" ? null : userForm.role_id
+                };
+                await api.post("/admin/users", submitData);
                 toast.success("User created successfully");
             }
             setIsDialogOpen(false);
             fetchData();
         } catch (error: any) {
-            if (error.response?.status !== 401) {
+            if (error.response?.status === 422) {
+                const errors = error.response.data.errors;
+                const firstError = Object.values(errors)[0] as string[];
+                toast.error(firstError[0] || "Validation failed");
+            } else if (error.response?.status !== 401) {
                 console.error(error);
                 toast.error(error.response?.data?.message || "Failed to save user");
             }

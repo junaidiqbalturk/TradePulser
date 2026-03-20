@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\VendorBill;
 use App\Models\VendorLedger;
 use App\Models\Vendor;
+use App\Models\User;
+use App\Notifications\AccountActivityNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class VendorBillController extends Controller
 {
@@ -61,6 +64,16 @@ class VendorBillController extends Controller
             ]);
 
             DB::commit();
+
+            // Phase 1: Notify Admins
+            $admins = User::where('company_id', $bill->company_id)
+                ->whereHas('role', function ($query) {
+                    $query->whereIn('name', ['Admin', 'Manager']);
+                })->get();
+            if ($admins->count() > 0) {
+                Notification::send($admins, new AccountActivityNotification($bill, 'created', auth()->user()->name));
+            }
+
             return response()->json($bill->load('vendor'), 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -88,7 +101,16 @@ class VendorBillController extends Controller
             'status' => 'required|in:unpaid,partial,paid',
         ]);
 
+        $oldStatus = $vendorBill->status;
         $vendorBill->update($validated);
+
+        // Phase 2: Notify Creator on payment
+        if ($oldStatus !== $vendorBill->status && $vendorBill->status === 'paid') {
+            if ($vendorBill->creator) {
+                $vendorBill->creator->notify(new AccountActivityNotification($vendorBill, 'approved', auth()->user()->name));
+            }
+        }
+
         return response()->json($vendorBill);
     }
 

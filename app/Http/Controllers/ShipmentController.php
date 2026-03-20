@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Shipment;
 use App\Models\ShipmentEvent;
+use App\Models\User;
+use App\Notifications\AccountActivityNotification;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Notification;
 
 class ShipmentController extends Controller
 {
@@ -69,6 +72,15 @@ class ShipmentController extends Controller
             'event_date' => now(),
         ]);
 
+        // Phase 1: Notify Admins
+        $admins = User::where('company_id', $shipment->company_id)
+            ->whereHas('role', function ($query) {
+                $query->whereIn('name', ['Admin', 'Manager']);
+            })->get();
+        if ($admins->count() > 0) {
+            Notification::send($admins, new AccountActivityNotification($shipment, 'created', auth()->user()->name));
+        }
+
         return response()->json($shipment->load('containers', 'events'), 201);
     }
 
@@ -89,12 +101,20 @@ class ShipmentController extends Controller
     {
         $shipment = Shipment::findOrFail($id);
         
-        $request->validate([
-            'status' => 'sometimes|string',
-            'eta' => 'sometimes|date',
-        ]);
-
+        $oldStatus = $shipment->status;
         $shipment->update($request->only(['status', 'eta']));
+
+        // Phase 2: Notify Creator if status improved or changed significantly
+        if ($request->has('status') && $oldStatus !== $request->status) {
+            if ($shipment->creator) {
+                $type = $request->status === 'cancelled' ? 'rejected' : 'approved'; // Using existing types for simplicity
+                // Actually let's use the status itself if we want, but AccountActivityNotification expects created/approved/rejected
+                $notifType = 'approved';
+                if ($request->status === 'Rejected' || $request->status === 'Cancelled') $notifType = 'rejected';
+                
+                $shipment->creator->notify(new AccountActivityNotification($shipment, $notifType, auth()->user()->name));
+            }
+        }
 
         return response()->json($shipment);
     }

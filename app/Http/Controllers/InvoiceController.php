@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 use App\Services\ExchangeRateService;
 use App\Services\AccountingService;
+use App\Models\User;
+use App\Notifications\AccountActivityNotification;
+use Illuminate\Support\Facades\Notification;
 
 class InvoiceController extends Controller
 {
@@ -103,6 +106,23 @@ class InvoiceController extends Controller
 
             DB::commit();
 
+            // Phase 1 or Phase 2 Notification
+            if ($invoice->status === 'approved') {
+                // If auto-approved, notify the creator (Phase 2)
+                if ($invoice->creator) {
+                    $invoice->creator->notify(new AccountActivityNotification($invoice, 'approved', 'System'));
+                }
+            } else {
+                // If pending, notify admins (Phase 1)
+                $admins = User::where('company_id', $invoice->company_id)
+                    ->whereHas('role', function ($query) {
+                        $query->whereIn('name', ['Admin', 'Manager']);
+                    })->get();
+                if ($admins->count() > 0) {
+                    Notification::send($admins, new AccountActivityNotification($invoice, 'created', auth()->user()->name));
+                }
+            }
+
             return response()->json($invoice->load('items', 'client'), 201);
         }
         catch (\Exception $e) {
@@ -163,6 +183,12 @@ class InvoiceController extends Controller
             $this->accountingService->autoPostInvoice($invoice);
 
             DB::commit();
+
+            // Phase 2: Notify the creator
+            if ($invoice->creator) {
+                $invoice->creator->notify(new AccountActivityNotification($invoice, 'approved', auth()->user()->name));
+            }
+
             return response()->json(['message' => 'Invoice approved and posted.']);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -178,6 +204,11 @@ class InvoiceController extends Controller
 
         $invoice->status = 'rejected';
         $invoice->save();
+
+        // Phase 2: Notify the creator
+        if ($invoice->creator) {
+            $invoice->creator->notify(new AccountActivityNotification($invoice, 'rejected', auth()->user()->name));
+        }
 
         return response()->json(['message' => 'Invoice rejected.']);
     }

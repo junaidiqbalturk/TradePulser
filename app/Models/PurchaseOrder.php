@@ -17,7 +17,7 @@ class PurchaseOrder extends Model
         'currency',
         'total_amount',
         'status',
-        'created_by',
+        'created_by_id',
         'notes',
         'company_id',
     ];
@@ -29,7 +29,7 @@ class PurchaseOrder extends Model
 
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by_id');
     }
 
     public function items()

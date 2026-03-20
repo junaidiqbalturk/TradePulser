@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\User;
+use App\Notifications\AccountActivityNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class PurchaseOrderController extends Controller
 {
@@ -38,7 +41,7 @@ class PurchaseOrderController extends Controller
                 'expected_delivery' => $validated['expected_delivery'],
                 'currency' => $validated['currency'],
                 'notes' => $validated['notes'],
-                'created_by' => $request->user()->id,
+                'created_by_id' => $request->user()->id,
                 'status' => 'draft',
             ]);
 
@@ -58,6 +61,15 @@ class PurchaseOrderController extends Controller
 
             $po->update(['total_amount' => $totalAmount]);
 
+            // Phase 1: Notify Admins
+            $admins = User::where('company_id', $po->company_id)
+                ->whereHas('role', function ($query) {
+                    $query->whereIn('name', ['Admin', 'Manager']);
+                })->get();
+            if ($admins->count() > 0) {
+                Notification::send($admins, new AccountActivityNotification($po, 'created', auth()->user()->name));
+            }
+
             return response()->json($po->load('items.product'), 201);
         });
     }
@@ -74,6 +86,12 @@ class PurchaseOrderController extends Controller
         }
 
         $purchaseOrder->update(['status' => 'approved']);
+
+        // Phase 2: Notify Creator
+        if ($purchaseOrder->creator) {
+            $purchaseOrder->creator->notify(new AccountActivityNotification($purchaseOrder, 'approved', auth()->user()->name));
+        }
+
         return response()->json($purchaseOrder);
     }
 
