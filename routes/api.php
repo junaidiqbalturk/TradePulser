@@ -38,6 +38,7 @@ use App\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\GeneratedDocumentController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReversalController;
 
 Route::post('/login', [AuthController::class , 'login']);
 Route::post('/register-company', [AuthController::class, 'registerCompany']);
@@ -82,6 +83,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('invoices/{invoice}/reject', [InvoiceController::class, 'reject'])->middleware('permission:approve_invoices');
     Route::apiResource('invoices', InvoiceController::class)->middleware('permission:view_invoices');
     Route::post('invoices', [InvoiceController::class, 'store'])->middleware('permission:create_invoices');
+    
+    // Reversal Workflow
+    Route::get('reversals/pending', [ReversalController::class, 'pendingReversals'])->middleware('permission:approve_reversal');
+    Route::post('reversals/{type}/{id}/request', [ReversalController::class, 'requestReversal']);
+    Route::post('reversals/{type}/{id}/approve', [ReversalController::class, 'approveReversal'])->middleware('permission:approve_reversal');
+    Route::post('reversals/{type}/{id}/reject', [ReversalController::class, 'rejectReversal'])->middleware('permission:approve_reversal');
     
     // Specific voucher routes must come before the resource route
     Route::get('vouchers/pending', [VoucherApprovalController::class, 'getPending']);
@@ -150,6 +157,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->middleware('permission:approve_pos');
     Route::apiResource('purchase-orders', PurchaseOrderController::class)->middleware('permission:view_pos');
     Route::post('purchase-orders', [PurchaseOrderController::class, 'store'])->middleware('permission:create_pos');
+
+    // PulseIQ AI Integration
+    Route::post('pulse-iq/chat', [App\Http\Controllers\PulseIqController::class, 'chat']);
+    Route::get('pulse-iq/conversations', [App\Http\Controllers\PulseIqController::class, 'getConversations']);
+    Route::get('pulse-iq/conversations/{id}/messages', [App\Http\Controllers\PulseIqController::class, 'getMessages']);
 
     // Admin & RBAC Management
     Route::get('roles/permissions', [RoleController::class, 'permissions'])->middleware('permission:manage_roles');

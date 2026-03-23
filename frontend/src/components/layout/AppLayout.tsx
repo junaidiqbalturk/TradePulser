@@ -7,6 +7,8 @@ import { HelpCenter } from "./HelpCenter";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
+import { PulseIqWidget } from "@/components/chat/PulseIqWidget";
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -64,6 +66,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <HelpCenter isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+            <PulseIqWidget />
         </div>
     );
 }

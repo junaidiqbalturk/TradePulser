@@ -68,7 +68,8 @@ class InvoiceController extends Controller
                 'discount' => $validated['discount'] ?? 0,
                 'tax' => $validated['tax'] ?? 0,
                 'total_amount' => $totalAmount,
-                'status' => 'pending'
+                'status' => 'pending',
+                'created_by_id' => auth()->id()
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -113,13 +114,14 @@ class InvoiceController extends Controller
                     $invoice->creator->notify(new AccountActivityNotification($invoice, 'approved', 'System'));
                 }
             } else {
-                // If pending, notify admins (Phase 1)
-                $admins = User::where('company_id', $invoice->company_id)
-                    ->whereHas('role', function ($query) {
-                        $query->whereIn('name', ['Admin', 'Manager']);
+                // If pending, notify users with approve_invoices permission
+                $approvers = User::where('company_id', $invoice->company_id)
+                    ->whereHas('role.permissions', function ($query) {
+                        $query->where('name', 'approve_invoices');
                     })->get();
-                if ($admins->count() > 0) {
-                    Notification::send($admins, new AccountActivityNotification($invoice, 'created', auth()->user()->name));
+                    
+                if ($approvers->count() > 0) {
+                    Notification::send($approvers, new AccountActivityNotification($invoice, 'created', auth()->user()->name));
                 }
             }
 
@@ -203,6 +205,7 @@ class InvoiceController extends Controller
         }
 
         $invoice->status = 'rejected';
+        $invoice->rejection_reason = $request->reason;
         $invoice->save();
 
         // Phase 2: Notify the creator

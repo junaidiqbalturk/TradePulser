@@ -67,7 +67,7 @@ class VoucherApprovalController extends Controller
         }
 
         $voucher->status = 'rejected';
-        $voucher->notes .= "\nRejection Reason: " . ($request->reason ?? 'No reason provided');
+        $voucher->rejection_reason = $request->reason;
         $voucher->save();
 
         // Phase 2: Notify the creator

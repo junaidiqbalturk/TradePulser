@@ -57,7 +57,17 @@ class AccountActivityNotification extends Notification
             $message = "Your {$entityName} #{$entityNumber} has been approved.";
         } elseif ($this->type === 'rejected') {
             $title = "{$entityName} Rejected";
-            $message = "Your {$entityName} #{$entityNumber} was rejected.";
+            $reason = $this->entity->rejection_reason ? " Reason: " . $this->entity->rejection_reason : "";
+            $message = "Your {$entityName} #{$entityNumber} was rejected.{$reason}";
+        } elseif ($this->type === 'reversal_requested') {
+            $title = "Reversal Requested: {$entityName}";
+            $message = "{$this->initiatorName} is requesting a reversal for {$entityName} #{$entityNumber}. Reason: {$this->entity->reversal_reason}";
+        } elseif ($this->type === 'reversal_approved') {
+            $title = "Reversal Approved: {$entityName}";
+            $message = "The reversal for your {$entityName} #{$entityNumber} has been approved.";
+        } elseif ($this->type === 'reversal_rejected') {
+            $title = "Reversal Rejected: {$entityName}";
+            $message = "The reversal request for {$entityName} #{$entityNumber} was rejected.";
         }
 
         return [

@@ -20,7 +20,14 @@ class Invoice extends Model
         'discount',
         'tax',
         'status',
+        'rejection_reason',
+        'created_by_id',
         'company_id',
+        'reversal_requested_by_id',
+        'reversal_approved_by_id',
+        'reversal_reason',
+        'reversal_requested_at',
+        'reversal_approved_at',
     ];
 
     public function client()
@@ -46,5 +53,20 @@ class Invoice extends Model
     public function documents()
     {
         return $this->morphMany(Document::class, 'documentable');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function reversalRequester()
+    {
+        return $this->belongsTo(User::class, 'reversal_requested_by_id');
+    }
+
+    public function reversalApprover()
+    {
+        return $this->belongsTo(User::class, 'reversal_approved_by_id');
     }
 }

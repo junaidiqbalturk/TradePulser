@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart3, FileText, AlertCircle, ArrowUpRight, ArrowDownRight, Wallet, Activity, TrendingUp, TrendingDown, BookOpen, Clock } from "lucide-react";
 import { motion, Variants } from "framer-motion";
+import { ReconciliationModal } from "@/components/reconciliation/ReconciliationModal";
+import { toast } from "sonner";
 
 const staggerContainer: Variants = {
     hidden: { opacity: 0 },
@@ -28,7 +30,12 @@ export default function ReportsPage() {
     const [trialBalance, setTrialBalance] = useState<any[]>([]);
     const [agingData, setAgingData] = useState<any>(null);
     const [unreconciledVouchers, setUnreconciledVouchers] = useState<any[]>([]);
+    const [pendingReversals, setPendingReversals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedVoucher, setSelectedVoucher] = useState<any | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isReversalModalOpen, setIsReversalModalOpen] = useState(false);
+    const [reversalTarget, setReversalTarget] = useState<{ type: string, id: number } | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -36,7 +43,7 @@ export default function ReportsPage() {
 
     const fetchData = async () => {
         try {
-            const [clientsRes, invoicesRes, vouchersRes, plRes, bsRes, tbRes, agingRes, unreconciledRes] = await Promise.all([
+            const [clientsRes, invoicesRes, vouchersRes, plRes, bsRes, tbRes, agingRes, unreconciledRes, reversalsRes] = await Promise.all([
                 api.get('/clients'),
                 api.get('/invoices'),
                 api.get('/vouchers'),
@@ -44,7 +51,8 @@ export default function ReportsPage() {
                 api.get('/reports/balance-sheet'),
                 api.get('/reports/trial-balance'),
                 api.get('/reports/aging'),
-                api.get('/vouchers/unreconciled')
+                api.get('/reconciliation/unreconciled-vouchers'),
+                api.get('/reversals/pending').catch(() => ({ data: { all: [] } })) // Optional for non-managers
             ]);
             setClients(clientsRes.data);
             setInvoices(invoicesRes.data);
@@ -54,6 +62,7 @@ export default function ReportsPage() {
             setTrialBalance(tbRes.data);
             setAgingData(agingRes.data);
             setUnreconciledVouchers(unreconciledRes.data);
+            setPendingReversals(Array.isArray(reversalsRes.data.all) ? reversalsRes.data.all : []);
         } catch (error) {
             console.error(error);
         } finally {
@@ -61,25 +70,26 @@ export default function ReportsPage() {
         }
     };
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR' }).format(amount);
+    const formatCurrency = (amount: number | string | null | undefined) => {
+        const value = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+        return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR' }).format(value);
     };
 
     const outstandingList = clients.map(client => {
         const clientInvs = invoices.filter(i => i.client_id === client.id);
         const clientReceipts = vouchers.filter(v => v.client_id === client.id && v.type === 'receipt');
 
-        const totalBilled = clientInvs.reduce((acc, i) => acc + i.total_amount, 0);
-        const totalPaid = clientReceipts.reduce((acc, v) => acc + v.amount, 0);
+        const totalBilled = clientInvs.reduce((acc, i) => acc + parseFloat(i.total_amount || 0), 0);
+        const totalPaid = clientReceipts.reduce((acc, v) => acc + parseFloat(v.amount || 0), 0);
         const balance = totalBilled - totalPaid;
 
         return { ...client, totalBilled, totalPaid, balance };
-    }).filter(c => c.balance > 0).sort((a, b) => b.balance - a.balance);
+    }).filter(c => c.balance > 0.01).sort((a, b) => b.balance - a.balance);
 
     // Global Stats
-    const globalBilled = invoices.reduce((acc, i) => acc + i.total_amount, 0);
-    const globalCollected = vouchers.filter(v => v.type === 'receipt').reduce((acc, v) => acc + v.amount, 0);
-    const globalExpenses = vouchers.filter(v => v.type === 'payment').reduce((acc, v) => acc + v.amount, 0);
+    const globalBilled = invoices.reduce((acc, i) => acc + parseFloat(i.total_amount || 0), 0);
+    const globalCollected = vouchers.filter(v => v.type === 'receipt').reduce((acc, v) => acc + parseFloat(v.amount || 0), 0);
+    const globalExpenses = vouchers.filter(v => v.type === 'payment').reduce((acc, v) => acc + parseFloat(v.amount || 0), 0);
     const globalOutstanding = outstandingList.reduce((acc, c) => acc + c.balance, 0);
 
     return (
@@ -93,84 +103,115 @@ export default function ReportsPage() {
                 <p className="text-muted-foreground mt-1 text-sm">Essential business summaries and financial metrics.</p>
             </motion.div>
 
+            {isReversalModalOpen && (
+                <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border rounded-xl shadow-2xl p-6 w-full max-w-md space-y-4">
+                        <h2 className="text-xl font-bold flex items-center gap-2"><Clock className="h-5 w-5 text-rose-500" /> Request Reversal</h2>
+                        <p className="text-sm text-muted-foreground">Please provide a detailed reason for reversing this {reversalTarget?.type}. This will be sent for supervisory approval.</p>
+                        <textarea 
+                            id="reversal-reason"
+                            className="w-full h-32 p-3 bg-muted border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                            placeholder="Reason for reversal..."
+                        />
+                        <div className="flex justify-end gap-3">
+                            <Button variant="ghost" onClick={() => setIsReversalModalOpen(false)}>Cancel</Button>
+                            <Button 
+                                className="bg-rose-500 hover:bg-rose-600 text-white"
+                                onClick={async () => {
+                                    const reason = (document.getElementById('reversal-reason') as HTMLTextAreaElement).value;
+                                    if (!reason || reason.length < 5) {
+                                        toast.error("Please provide a valid reason (min 5 characters)");
+                                        return;
+                                    }
+                                    try {
+                                        await api.post(`/reversals/${reversalTarget?.type}/${reversalTarget?.id}/request`, { reason });
+                                        toast.success("Reversal request submitted");
+                                        setIsReversalModalOpen(false);
+                                        fetchData();
+                                    } catch (err: any) {
+                                        toast.error(err.response?.data?.error || "Failed to submit request");
+                                    }
+                                }}
+                            >
+                                Submit Request
+                            </Button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
             {loading ? (
                 <div className="flex justify-center p-24"><Activity className="animate-spin h-8 w-8 text-primary" /></div>
             ) : (
                 <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-8">
 
-                    {/* Rich Stat Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <motion.div variants={fadeUp}>
-                            <Card className="border border-border bg-card shadow-sm hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-                                <CardContent className="p-6 relative z-10">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-medium text-muted-foreground">Total Billed</p>
-                                            <p className="text-3xl font-bold text-foreground tracking-tight">{formatCurrency(globalBilled)}</p>
-                                        </div>
-                                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                            <FileText className="h-5 w-5 text-primary" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500" />
-                            </Card>
-                        </motion.div>
+                    {/* Dashboard-Style Stat Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                        {[
+                            { 
+                                title: "Total Billed", 
+                                value: formatCurrency(globalBilled), 
+                                icon: FileText, 
+                                color: "text-primary", 
+                                bg: "bg-primary/10", 
+                                gradient: "hover:bg-primary/5" 
+                            },
+                            { 
+                                title: "Total Collected", 
+                                value: formatCurrency(globalCollected), 
+                                icon: ArrowDownRight, 
+                                color: "text-emerald-500", 
+                                bg: "bg-emerald-500/10", 
+                                gradient: "hover:bg-emerald-500/5" 
+                            },
+                            { 
+                                title: "Total Outstanding", 
+                                value: formatCurrency(globalOutstanding), 
+                                icon: AlertCircle, 
+                                color: "text-orange-500", 
+                                bg: "bg-orange-500/10", 
+                                gradient: "hover:bg-orange-500/5" 
+                            },
+                            { 
+                                title: "Total Expenses", 
+                                value: formatCurrency(globalExpenses), 
+                                icon: ArrowUpRight, 
+                                color: "text-rose-500", 
+                                bg: "bg-rose-500/10", 
+                                gradient: "hover:bg-rose-500/5" 
+                            }
+                        ].map((stat, i) => (
+                            <motion.div 
+                                variants={fadeUp} 
+                                key={i}
+                                whileHover={{ y: -5, scale: 1.02 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                                className="group"
+                            >
+                                <Card className={`relative overflow-hidden border border-border bg-card shadow-sm p-6 transition-all duration-300 ${stat.gradient}`}>
+                                    {/* Background Watermark Icon */}
+                                    <motion.div
+                                        initial={{ opacity: 0.05, scale: 1 }}
+                                        whileHover={{ opacity: 0.1, scale: 1.2, rotate: 12 }}
+                                        className="absolute -right-6 -bottom-6 pointer-events-none z-0"
+                                    >
+                                        <stat.icon className={`h-32 w-32 ${stat.color}`} />
+                                    </motion.div>
 
-                        <motion.div variants={fadeUp}>
-                            <Card className="border border-border bg-card shadow-sm hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent" />
-                                <CardContent className="p-6 relative z-10">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-medium text-muted-foreground">Total Collected</p>
-                                            <p className="text-3xl font-bold text-foreground tracking-tight">{formatCurrency(globalCollected)}</p>
+                                    <div className="relative z-10 flex flex-col h-full">
+                                        <div className={`flex h-11 w-11 items-center justify-center rounded-full ${stat.bg} mb-4 transition-transform duration-300 group-hover:scale-110`}>
+                                            <stat.icon className={`h-5 w-5 ${stat.color}`} />
                                         </div>
-                                        <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                                            <ArrowDownRight className="h-5 w-5 text-emerald-500" />
+                                        <div className="space-y-1">
+                                            <h4 className="text-2xl font-bold text-foreground tracking-tight line-clamp-1">
+                                                {stat.value}
+                                            </h4>
+                                            <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                                         </div>
                                     </div>
-                                </CardContent>
-                                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all duration-500" />
-                            </Card>
-                        </motion.div>
-
-                        <motion.div variants={fadeUp}>
-                            <Card className="border border-border bg-card shadow-sm hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent" />
-                                <CardContent className="p-6 relative z-10">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
-                                            <p className="text-3xl font-bold text-foreground tracking-tight">{formatCurrency(globalOutstanding)}</p>
-                                        </div>
-                                        <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                                            <AlertCircle className="h-5 w-5 text-orange-500" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl group-hover:bg-orange-500/20 transition-all duration-500" />
-                            </Card>
-                        </motion.div>
-
-                        <motion.div variants={fadeUp}>
-                            <Card className="border border-border bg-card shadow-sm hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent" />
-                                <CardContent className="p-6 relative z-10">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-medium text-muted-foreground">Total Expenses</p>
-                                            <p className="text-3xl font-bold text-foreground tracking-tight">{formatCurrency(globalExpenses)}</p>
-                                        </div>
-                                        <div className="h-10 w-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
-                                            <ArrowUpRight className="h-5 w-5 text-rose-500" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                                <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition-all duration-500" />
-                            </Card>
-                        </motion.div>
+                                </Card>
+                            </motion.div>
+                        ))}
                     </div>
 
                     <motion.div variants={fadeUp}>
@@ -183,6 +224,14 @@ export default function ReportsPage() {
                                 <TabsTrigger value="tb" className="rounded-lg data-[state=active]:bg-background flex items-center gap-2 px-4"><Activity className="h-4 w-4" /> Trial Balance</TabsTrigger>
                                 <TabsTrigger value="invoices" className="rounded-lg data-[state=active]:bg-background flex items-center gap-2 px-4"><FileText className="h-4 w-4" /> Invoices</TabsTrigger>
                                 <TabsTrigger value="vouchers" className="rounded-lg data-[state=active]:bg-background flex items-center gap-2 px-4"><BarChart3 className="h-4 w-4" /> Vouchers</TabsTrigger>
+                                <TabsTrigger value="reversals" className="rounded-lg data-[state=active]:bg-background flex items-center gap-2 px-4 relative">
+                                    <Clock className="h-4 w-4" /> Reversals
+                                    {pendingReversals.length > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                                            {pendingReversals.length}
+                                        </span>
+                                    )}
+                                </TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="outstanding" className="mt-0 outline-none">
@@ -448,7 +497,17 @@ export default function ReportsPage() {
                                                         <TableCell className="text-muted-foreground">{v.date}</TableCell>
                                                         <TableCell className="text-right font-bold">{formatCurrency(v.amount)}</TableCell>
                                                         <TableCell className="text-right pr-6">
-                                                            <Button size="sm" variant="outline" className="h-8">Match to Invoice</Button>
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="outline" 
+                                                                className="h-8 font-bold hover:bg-primary hover:text-white transition-all rounded-lg"
+                                                                onClick={() => {
+                                                                    setSelectedVoucher(v);
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                            >
+                                                                Match to Invoice
+                                                            </Button>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
@@ -478,7 +537,8 @@ export default function ReportsPage() {
                                                     <TableHead className="pl-6 font-medium">Invoice #</TableHead>
                                                     <TableHead className="font-medium">Client</TableHead>
                                                     <TableHead className="font-medium">Date</TableHead>
-                                                    <TableHead className="text-right pr-6 font-medium">Amount</TableHead>
+                                                    <TableHead className="text-right font-medium">Amount</TableHead>
+                                                    <TableHead className="text-right pr-6 font-medium">Action</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -487,7 +547,28 @@ export default function ReportsPage() {
                                                         <TableCell className="pl-6 font-medium text-foreground">{inv.invoice_number}</TableCell>
                                                         <TableCell className="text-foreground">{inv.client?.company_name}</TableCell>
                                                         <TableCell className="text-muted-foreground">{inv.date}</TableCell>
-                                                        <TableCell className="text-right pr-6 font-bold text-foreground">{formatCurrency(inv.total_amount)}</TableCell>
+                                                        <TableCell className="text-right font-bold text-foreground">{formatCurrency(inv.total_amount)}</TableCell>
+                                                        <TableCell className="text-right pr-6">
+                                                            {inv.status !== 'reversed' && inv.status !== 'reversal_pending' && (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    className="h-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                                                                    onClick={() => {
+                                                                        setReversalTarget({ type: 'invoice', id: inv.id });
+                                                                        setIsReversalModalOpen(true);
+                                                                    }}
+                                                                >
+                                                                    Reverse
+                                                                </Button>
+                                                            )}
+                                                            {inv.status === 'reversal_pending' && (
+                                                                <span className="text-[10px] font-bold text-orange-500 uppercase">Pending Rev.</span>
+                                                            )}
+                                                            {inv.status === 'reversed' && (
+                                                                <span className="text-[10px] font-bold text-rose-500 uppercase">Reversed</span>
+                                                            )}
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
@@ -510,7 +591,8 @@ export default function ReportsPage() {
                                                     <TableHead className="font-medium">Client / Entity</TableHead>
                                                     <TableHead className="font-medium">Type</TableHead>
                                                     <TableHead className="font-medium">Date</TableHead>
-                                                    <TableHead className="text-right pr-6 font-medium">Amount</TableHead>
+                                                    <TableHead className="text-right font-medium">Amount</TableHead>
+                                                    <TableHead className="text-right pr-6 font-medium">Action</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -527,9 +609,107 @@ export default function ReportsPage() {
                                                             </span>
                                                         </TableCell>
                                                         <TableCell className="text-muted-foreground">{v.date}</TableCell>
-                                                        <TableCell className="text-right pr-6 font-bold text-foreground">{formatCurrency(v.amount)}</TableCell>
+                                                        <TableCell className="text-right font-bold text-foreground">{formatCurrency(v.amount)}</TableCell>
+                                                        <TableCell className="text-right pr-6">
+                                                            {v.status !== 'reversed' && v.status !== 'reversal_pending' && (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    className="h-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                                                                    onClick={() => {
+                                                                        setReversalTarget({ type: 'voucher', id: v.id });
+                                                                        setIsReversalModalOpen(true);
+                                                                    }}
+                                                                >
+                                                                    Reverse
+                                                                </Button>
+                                                            )}
+                                                            {v.status === 'reversal_pending' && (
+                                                                <span className="text-[10px] font-bold text-orange-500 uppercase">Pending Rev.</span>
+                                                            )}
+                                                            {v.status === 'reversed' && (
+                                                                <span className="text-[10px] font-bold text-rose-500 uppercase">Reversed</span>
+                                                            )}
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))}
+                                            </TableBody>
+                                        </Table>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            <TabsContent value="reversals" className="mt-0 outline-none">
+                                <Card className="border border-border shadow-sm overflow-hidden rounded-xl bg-card">
+                                    <CardHeader className="bg-muted/40 border-b border-border px-6 py-5">
+                                        <CardTitle className="text-xl font-bold text-foreground">Pending Reversal Requests</CardTitle>
+                                        <CardDescription className="text-muted-foreground font-medium mt-1">Transactions waiting for supervisor approval to be reversed.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-0">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-muted/20">
+                                                    <TableHead className="pl-6">Type</TableHead>
+                                                    <TableHead>Reference #</TableHead>
+                                                    <TableHead>Requested By</TableHead>
+                                                    <TableHead>Reason</TableHead>
+                                                    <TableHead className="text-right pr-6">Actions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {pendingReversals.map((r: any) => (
+                                                    <TableRow key={`${r.type}-${r.id}`}>
+                                                        <TableCell className="pl-6">
+                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${r.type === 'invoice' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                                                                {r.type}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell className="font-mono font-medium">{r.invoice_number || r.voucher_number}</TableCell>
+                                                        <TableCell className="text-sm">{r.reversal_requester?.name || 'Unknown'}</TableCell>
+                                                        <TableCell className="max-w-xs truncate text-xs text-muted-foreground" title={r.reversal_reason}>{r.reversal_reason}</TableCell>
+                                                        <TableCell className="text-right pr-6 space-x-2">
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="outline" 
+                                                                className="h-8 border-rose-200 text-rose-600 hover:bg-rose-50"
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        await api.post(`/reversals/${r.type}/${r.id}/approve`);
+                                                                        toast.success("Reversal approved");
+                                                                        fetchData();
+                                                                    } catch (err: any) {
+                                                                        toast.error(err.response?.data?.error || "Approval failed");
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Approve
+                                                            </Button>
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="ghost" 
+                                                                className="h-8"
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        await api.post(`/reversals/${r.type}/${r.id}/reject`);
+                                                                        toast.info("Reversal rejected");
+                                                                        fetchData();
+                                                                    } catch (err: any) {
+                                                                        toast.error("Rejection failed");
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Reject
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                                {pendingReversals.length === 0 && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={5} className="text-center p-12 text-muted-foreground">
+                                                            No pending reversal requests.
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
                                             </TableBody>
                                         </Table>
                                     </CardContent>
@@ -539,6 +719,19 @@ export default function ReportsPage() {
                     </motion.div>
                 </motion.div>
             )}
+
+            <ReconciliationModal 
+                voucher={selectedVoucher}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedVoucher(null);
+                }}
+                onSuccess={() => {
+                    setIsModalOpen(false);
+                    setSelectedVoucher(null);
+                    fetchData(); // Refresh all data
+                }}
+            />
         </div >
     );
 }

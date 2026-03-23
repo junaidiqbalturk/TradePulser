@@ -67,6 +67,7 @@ class VoucherController extends Controller
             $validated['base_amount'] = $baseAmount;
             $validated['currency'] = $currency;
 
+            $validated['created_by_id'] = auth()->id();
             $voucher = Voucher::create($validated);
             $voucher->refresh(); // Load database defaults (like status = 'pending')
 
@@ -78,14 +79,14 @@ class VoucherController extends Controller
 
             DB::commit();
 
-            // Phase 1: Notify Admins of the company
-            $admins = User::where('company_id', $voucher->company_id)
-                ->whereHas('role', function ($query) {
-                    $query->whereIn('name', ['Admin', 'Manager']); // Assuming Admins/Managers approve
+            // Phase 1: Notify users with approve_vouchers permission
+            $approvers = User::where('company_id', $voucher->company_id)
+                ->whereHas('role.permissions', function ($query) {
+                    $query->where('name', 'approve_vouchers');
                 })->get();
-
-            if ($admins->count() > 0) {
-                Notification::send($admins, new AccountActivityNotification($voucher, 'created', auth()->user()->name));
+                
+            if ($approvers->count() > 0) {
+                Notification::send($approvers, new AccountActivityNotification($voucher, 'created', auth()->user()->name));
             }
 
             return response()->json($voucher->load(['client', 'clientBank', 'vendor', 'vendorBank']), 201);

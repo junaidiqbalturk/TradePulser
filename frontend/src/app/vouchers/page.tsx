@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, StickyNote, Printer, Search, Filter, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Plus, StickyNote, Printer, Search, Filter, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Table,
@@ -15,6 +16,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { TransactionDetailModal } from "@/components/documents/TransactionDetailModal";
 
 interface Voucher {
     id: number;
@@ -35,6 +37,18 @@ export default function VouchersPage() {
     const [pendingVouchers, setPendingVouchers] = useState<Voucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isViewOpen, setIsViewOpen] = useState(false);
+    const [viewId, setViewId] = useState<number | null>(null);
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    useEffect(() => {
+        const viewParam = searchParams.get('view');
+        if (viewParam) {
+            setViewId(parseInt(viewParam));
+            setIsViewOpen(true);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         fetchData();
@@ -223,9 +237,15 @@ export default function VouchersPage() {
                                     {formatCurrency(voucher.amount)}
                                 </TableCell>
                                 <TableCell className="text-right pr-5">
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary" onClick={() => window.open(`/vouchers/${voucher.id}/print`, '_blank')} title="Print Voucher">
-                                        <Printer className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex justify-end gap-2">
+                                        <Button variant="ghost" size="sm" onClick={() => { setViewId(voucher.id); setIsViewOpen(true); }} className="h-8 text-xs font-semibold text-primary hover:bg-primary/10">
+                                            <Eye className="h-3.5 w-3.5 mr-1" />
+                                            View
+                                        </Button>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary" onClick={() => window.open(`/vouchers/${voucher.id}/print`, '_blank')} title="Print Voucher">
+                                            <Printer className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -244,6 +264,20 @@ export default function VouchersPage() {
                     </TableBody>
                 </Table>
             </div>
+
+            <TransactionDetailModal 
+                type="voucher" 
+                id={viewId} 
+                onClose={() => {
+                    setIsViewOpen(false);
+                    setViewId(null);
+                    // Remove view param from URL
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('view');
+                    router.replace(`/vouchers?${params.toString()}`);
+                }}
+                onActionComplete={fetchData}
+            />
         </div>
     );
 }

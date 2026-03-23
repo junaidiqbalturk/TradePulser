@@ -207,4 +207,120 @@ class AccountingService
 
         return null;
     }
+
+    public function executeInvoiceReversal(Invoice $invoice, $approvedByUserId)
+    {
+        return DB::transaction(function () use ($invoice, $approvedByUserId) {
+            // 1. Create Contra Ledger Entry
+            Ledger::create([
+                'client_id' => $invoice->client_id,
+                'invoice_id' => $invoice->id,
+                'date' => now(), // Reversal happens now
+                'description' => 'REVERSAL: Invoice ' . $invoice->invoice_number,
+                'debit' => 0,
+                'credit' => $invoice->total_amount,
+                'company_id' => $invoice->company_id,
+            ]);
+
+            // 2. Create Contra Journal Entry (GL)
+            $arAccount = Account::where('code', '1200')->first();
+            $salesAccount = Account::where('code', '4000')->first();
+
+            if ($arAccount && $salesAccount) {
+                $this->createJournalEntry(
+                    now(),
+                    "REVERSAL: Sales Invoice " . $invoice->invoice_number,
+                    $invoice->invoice_number . '-REV',
+                    [
+                        ['account_id' => $arAccount->id, 'debit' => 0, 'credit' => $invoice->base_amount],
+                        ['account_id' => $salesAccount->id, 'debit' => $invoice->base_amount, 'credit' => 0],
+                    ]
+                );
+            }
+
+            // 3. Un-reconcile linked payments
+            DB::table('payment_reconciliations')->where('invoice_id', $invoice->id)->delete();
+
+            // 4. Update status
+            $invoice->status = 'reversed';
+            $invoice->reversal_approved_by_id = $approvedByUserId;
+            $invoice->reversal_approved_at = now();
+            $invoice->save();
+        });
+    }
+
+    public function executeVoucherReversal(Voucher $voucher, $approvedByUserId)
+    {
+        return DB::transaction(function () use ($voucher, $approvedByUserId) {
+            // 1. Handle Client/Vendor Ledger Contra
+            if ($voucher->client_id) {
+                $originalDebit = $voucher->type === 'payment' ? $voucher->amount : 0;
+                $originalCredit = $voucher->type === 'receipt' ? $voucher->amount : 0;
+
+                Ledger::create([
+                    'client_id' => $voucher->client_id,
+                    'voucher_id' => $voucher->id,
+                    'date' => now(),
+                    'description' => 'REVERSAL: ' . ucfirst($voucher->type) . ' Voucher ' . $voucher->voucher_number,
+                    'debit' => $originalCredit, // Swapped
+                    'credit' => $originalDebit, // Swapped
+                    'company_id' => $voucher->company_id,
+                ]);
+            }
+
+            if ($voucher->vendor_id && $voucher->type === 'payment') {
+                VendorLedger::create([
+                    'vendor_id' => $voucher->vendor_id,
+                    'voucher_id' => $voucher->id,
+                    'date' => now(),
+                    'description' => 'REVERSAL: Payment Voucher ' . $voucher->voucher_number,
+                    'debit' => 0,
+                    'credit' => $voucher->amount, // Original was Debit to AP
+                    'company_id' => $voucher->company_id,
+                ]);
+            }
+
+            // 2. Create Contra Journal Entry (GL)
+            $cashAccount = $voucher->payment_method === 'cash' 
+                ? Account::where('code', '1000')->first() 
+                : Account::where('code', '1100')->first();
+
+            if ($voucher->type === 'receipt') {
+                $arAccount = Account::where('code', '1200')->first();
+                if ($cashAccount && $arAccount) {
+                    $this->createJournalEntry(
+                        now(),
+                        "REVERSAL: Payment Receipt " . $voucher->voucher_number,
+                        $voucher->voucher_number . '-REV',
+                        [
+                            ['account_id' => $cashAccount->id, 'debit' => 0, 'credit' => $voucher->base_amount],
+                            ['account_id' => $arAccount->id, 'debit' => $voucher->base_amount, 'credit' => 0],
+                        ]
+                    );
+                }
+            } else if ($voucher->type === 'payment') {
+                $apAccount = Account::where('code', '2000')->first();
+                if ($cashAccount && $apAccount) {
+                    $this->createJournalEntry(
+                        now(),
+                        "REVERSAL: Vendor Payment " . $voucher->voucher_number,
+                        $voucher->voucher_number . '-REV',
+                        [
+                            ['account_id' => $apAccount->id, 'debit' => 0, 'credit' => $voucher->base_amount],
+                            ['account_id' => $cashAccount->id, 'debit' => $voucher->base_amount, 'credit' => 0],
+                        ]
+                    );
+                }
+            }
+
+            // 3. Un-reconcile
+            DB::table('payment_reconciliations')->where('voucher_id', $voucher->id)->delete();
+
+            // 4. Update status
+            $voucher->status = 'reversed';
+            $voucher->reversal_approved_by_id = $approvedByUserId;
+            $voucher->reversal_approved_at = now();
+            $voucher->save();
+        });
+    }
 }

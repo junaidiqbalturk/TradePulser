@@ -87,8 +87,8 @@ export function NotificationBell() {
         const type = notification.data.entity_type;
         const id = notification.data.entity_id;
         
-        if (type === 'invoice') router.push(`/invoices/${id}`);
-        else if (type === 'voucher') router.push(`/vouchers/${id}`);
+        if (type === 'invoice') router.push(`/invoices?view=${id}`);
+        else if (type === 'voucher') router.push(`/vouchers?view=${id}`);
         else if (type === 'shipment') router.push(`/shipments/${id}`);
         else if (type === 'purchaseorder') router.push(`/purchase-orders/${id}`);
         

@@ -80,7 +80,7 @@ class ReconciliationController extends Controller
 
     public function getOutstandingInvoices(Request $request)
     {
-        $query = Invoice::whereIn('status', ['unpaid', 'partially_paid'])->with('client');
+        $query = Invoice::whereIn('status', ['unpaid', 'partially_paid', 'approved'])->with('client');
         
         if ($request->has('client_id')) {
             $query->where('client_id', $request->client_id);
